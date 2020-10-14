@@ -1,0 +1,168 @@
+@font-face 
+  font-family: 'Quicksand'
+  src: url('../fonts/Quicksand-Regular.ttf')
+
+body 
+    font-family: 'Quicksand'
+
+.center-box
+    display: flex
+    flex-direction: column
+    justify-content: center
+    align-content: center
+    align-items: center
+
+.main-box
+    background: linear-gradient(to bottom right, #eff0ef 70%,  rgba(102, 179, 179, 0.3))
+    position: absolute
+    top: 0
+    bottom: 0
+    left: 0
+    right: 0
+
+    .shadow-box
+        box-shadow: 0px 0px 20px  #444
+        justify-content: space-around
+        padding: 100px
+        border-radius: 5px
+        background: #fff
+
+        input, button
+            margin: 30px 70px
+
+        h1
+            font-size: 3rem
+        
+        p
+            font-size: 1.5em
+
+
+button
+    padding: 15px 30px
+    background: #4da6a6
+    // background: #198d8d
+    border: none
+    border-radius: 3px
+    color: #fff
+    box-shadow: 0px 0px 10px #666
+    font-weight: bold
+    font-size: 1rem
+    transition: all 100ms linear
+
+    &:hover
+        box-shadow: 0px 0px 7px #aaa
+
+    &:disabled
+        box-shadow: none
+        // color: #aaa
+        background: #888
+
+.hidden-file-input
+    input
+        display: none
+
+    button
+        padding: 15px 50px
+        font-size: 1.25rem
+        width: 200px
+
+.editor
+    background: #aaa
+    position: fixed
+    top: 0
+    bottom: 0
+    left: 0
+    right: 0
+    display: flex
+    flex-direction: column
+    justify-content: center
+    align-items: stretch
+
+    .header-row
+
+        // height: 70px
+        // box-shadow: 0 0 20px #666
+        // background: white
+        padding: 15px
+        // box-sizing: border-box
+        display: flex
+        position: fixed
+        top: 0
+        left: 0
+        z-index: 1000000
+
+        p
+            margin-left: 20px
+
+    .bottom-row
+        // position: absolute
+        bottom: 0
+        left: 0
+        right: 0
+        height: 110px
+        background: #ffffff
+        // box-shadow: 0 0 20px #666
+        display: flex
+        flex-direction: row
+        justify-content: space-between
+        align-content: center
+        // align-self: center        
+        padding: 30px 50px
+        box-sizing: border-box
+
+    .page
+        // background: white
+        height: 100vh
+        width: 100vw
+        // z-index: 1000000
+        // position:fixed
+        // box-shadow: 0 0 20px #666
+        // margin-bottom: 28px
+
+
+
+
+$pulseSize: 10px
+$transparentBlue: rgba(250, 152, 95, 0)
+$blue: rgba(250, 152, 95, 0.65)
+
+.center
+  display: flex
+  flex-direction: row
+  align-items: center
+  justify-content: center
+  position: fixed
+  top: 15px
+  left: 0
+  right: 0
+  z-index: 99999999999999
+
+.pulse
+  width: $pulseSize
+  height: $pulseSize
+  border-radius: 50%
+  background: $blue
+  box-shadow: 0 0 0 $blue
+  transition: all 0.2s
+  cursor: pointer
+
+.animate
+    animation: pulsing 2s
+    animation-iteration-count: 1
+
+//   &:hover
+//     --blue:rgba(209, 167, 160, 0.65)
+//     --transparentBlue:rgba(209, 167, 160, 0)
+
+//   &:active
+//     transform: scale(1.5)
+
+@keyframes pulsing
+  from
+    box-shadow: 0 0 0 0 $blue
+
+  70%
+    box-shadow: 0 0 0 $pulseSize $transparentBlue
+
+  to
+    box-shadow: 0 0 0 0 $transparentBlue
