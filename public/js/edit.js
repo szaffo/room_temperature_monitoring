@@ -3,7 +3,7 @@
 document.addEventListener("DOMContentLoaded", () => {
 
     document.editor = new Editor()
-    document.webSocket = new WebSocket('ws://192.168.0.117:8765');
+    document.webSocket = new WebSocket('ws://192.168.0.118:8765');
     document.webSocket.onmessage = function (event) {
      
         data = JSON.parse(event.data)
@@ -40,12 +40,12 @@ class Editor {
             mode: 'lines',
             line: {
                 shape: 'line',
-                color: 'rgb(250, 152, 95)',
+                color: '#7A0019',
                 width: 1
             },
             type: 'scatter',
             x: [],
-            y: [],
+            y: []
         }
 
         this.hudTrace = {
@@ -60,20 +60,23 @@ class Editor {
             x: [],
             y: [],
             yaxis: 'y2',
+            visible: 'legendonly'
         }
 
         let today = new Date();
         let tommorow = new Date();
         const dd = String(today.getDate()).padStart(2, '0');
         const ddt = String(today.getDate() + 1).padStart(2, '0');
+        const ydd = String(today.getDate() - 1).padStart(2, '0');
         const mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
         const yyyy = today.getFullYear();
 
         today = yyyy + '-' + mm + '-' + dd;
         tommorow = yyyy + '-' + mm + '-' + ddt;
+        this.yesterday = yyyy + '-' + mm + '-' + ydd;
         this.today = today
         this.tommorow = tommorow
-        this.lastTimestamp = Date.parse(this.today) -2*60*60*1000
+        this.lastTimestamp = Date.parse(this.today) -2*60*60*1000 - 24*60*60*1000
         console.log("timestamp at start: ", this.lastTimestamp)
 
 
@@ -97,7 +100,7 @@ class Editor {
             yaxis: {
                 autorange: false,
 
-                range: [18, 28],
+                range: [15, 25],
                 type: 'linear',
                 dtick: 1,
                 title: {
@@ -106,36 +109,26 @@ class Editor {
                 },
                 showspikes: true,
                 spikemode: 'toaxis',
-                titlefont: { color: 'rgb(250, 152, 95)' },
-                tickfont: { color: 'rgb(250, 152, 95)' },
+                titlefont: { color: '#7A0019' },
+                tickfont: { color: '#7A0019' },
+                side: 'right'
             },
             yaxis2: {
                 title: 'Humidity',
                 titlefont: { color: 'rgb(148, 103, 189)' },
                 tickfont: { color: 'rgb(148, 103, 189)' },
                 overlaying: 'y',
-                side: 'right',
-                range: [15, 35],
-                dtick: 2,
+                side: 'left',
+                range: [15, 40],
+                dtick: 2.5,
                 showspikes: true,
             }
         }
 
-        const constTrace = {
-            name: '22.5°C',
-            mode: 'lines',
-            line: {
-                shape: 'line',
-                width: 1
-            },
-            type: 'scatter',
-            x: [today, tommorow],
-            y: [22.5, 22.5],
-        }
-
         this.traces.push(this.tempTrace)
         this.traces.push(this.hudTrace)
-        this.traces.push(constTrace)
+        this.addHeatingTrace()
+        // this.traces.push(constTrace)
         // this.lastTime = Date.parse('01/25/1999 15:45:00')
         this.init = false
     }
@@ -174,7 +167,13 @@ class Editor {
         }
         this.traces.push(this.avgTrace)
         
-        Plotly.newPlot('page', this.traces, this.layout);
+        Plotly.newPlot('page', this.traces, this.layout, {
+            scrollZoom: true,
+            displayModeBar: true,
+            locale: 'hu',
+            responsive: true,
+            showlegend: false
+        });
         this.init = true
         console.log("Timestamp at the end:", this.lastTimestamp)
         updateHeader(`Temperature: ${Math.round(data.data[data.data.length - 1].temperature * 10) / 10}°C\nHumidity: ${Math.round(data.data[data.data.length - 1].humidity * 10) / 10}%`)
@@ -233,6 +232,43 @@ class Editor {
         } else {
             this.create(data)
         }
+    }
+
+    addHeatingTrace() {
+        const heatingTrace = {
+            name: 'Heating',
+            mode: 'lines',
+            line: {
+                shape: 'line',
+                width: 1
+            },
+            type: 'scatter',
+            x: [
+                this.yesterday,
+                this.yesterday + ' 6:29:59',
+                this.yesterday + ' 6:30:00',
+                this.yesterday + ' 8:09:59',
+                this.yesterday + ' 8:10:00',
+                this.yesterday + ' 19:59:59',
+                this.yesterday + ' 20:00:00',
+                this.yesterday + ' 21:20:00',
+                this.yesterday + ' 21:20:01',
+                this.today,
+                this.today,
+                this.today + ' 6:29:59',
+                this.today + ' 6:30:00',
+                this.today + ' 8:09:59',
+                this.today + ' 8:10:00',
+                this.today + ' 19:59:59',
+                this.today + ' 20:00:00',
+                this.today + ' 21:20:00',
+                this.today + ' 21:20:01',
+                this.tommorow,
+            ],
+            y: [19, 19, 22.5, 22.5, 19, 19, 21.5, 21.5, 19, 19, 19, 19, 22.5, 22.5, 19, 19, 21.5, 21.5, 19, 19],
+        }
+
+        this.traces.push(heatingTrace)
     }
 
 }

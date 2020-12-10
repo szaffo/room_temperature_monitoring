@@ -9,6 +9,7 @@ import Adafruit_DHT
 import time
 import traceback
 import json
+from gpiozero import LED
 
 # Consts
 TIME_BETWEEN_MEASUREMENTS = 3
@@ -17,12 +18,14 @@ MAX_HUMIDITY_DELTA_PER_SEC = 15
 FLATTEN_RATE = 20
 DHT_SENSOR = Adafruit_DHT.DHT22
 DHT_PIN = 4
+DB_FILE_LOCATION = '/home/pi/dht/dht.db'
 
 # Globals
-flattenTemp = [0 for x in range(FLATTEN_RATE)]
-flattenHumi = [0 for x in range(FLATTEN_RATE)]
-db = SqliteDatabase('dht.db')
-
+flattenTemp = [] # [0 for x in range(FLATTEN_RATE)]
+flattenHumi = [] # [0 for x in range(FLATTEN_RATE)]
+db = SqliteDatabase(DB_FILE_LOCATION)
+led = LED(26)
+led.off()
 
 def fillFlatten():
     global flattenTemp
@@ -70,23 +73,33 @@ def measure():
     if humidity == None or temperature == None:
         raise ValueError("Can't read from sensor")
 
-    lastmt = flattenTemp[-1] if not flattenTemp[-1] == 0 else temperature 
-    lastmh = flattenHumi[-1] if not flattenHumi[-1] == 0 else humidity 
+    if len(flattenTemp) >= FLATTEN_RATE:
+        lastmt = flattenTemp[-1]
+        lastmh = flattenHumi[-1]
+        
+        if abs(lastmt - temperature) > MAX_TEMPERATURE_DELTA_PER_SEC:
+            raise ValueError("Temperature propably not correct")
+
+        if abs(lastmh - humidity) > MAX_HUMIDITY_DELTA_PER_SEC:
+            raise ValueError("Humidity propably not correct")
+
+        flattenTemp = rotate(flattenTemp)
+        flattenHumi = rotate(flattenHumi)
+
+        flattenTemp[0] = temperature
+        flattenHumi[0] = humidity
     
-    if abs(lastmt - temperature) > MAX_TEMPERATURE_DELTA_PER_SEC:
-        raise ValueError("Temperature propably not correct")
+    else:
+        flattenTemp.append(temperature)
+        flattenHumi.append(humidity)
 
-    if abs(lastmh - humidity) > MAX_HUMIDITY_DELTA_PER_SEC:
-        raise ValueError("Humidity propably not correct")
+    avgTemperaute = sum(flattenTemp) / len(flattenTemp)
+    avgHumidity = sum(flattenHumi) / len(flattenHumi)
 
-    flattenTemp = rotate(flattenTemp)
-    flattenHumi = rotate(flattenHumi)
-
-    flattenTemp[0] = temperature
-    flattenHumi[0] = humidity
-
-    avgTemperaute = sum(flattenTemp) / FLATTEN_RATE
-    avgHumidity = sum(flattenHumi) / FLATTEN_RATE
+    if (avgHumidity > 32.5):
+        led.on()
+    else:
+        led.off()
 
     Measurement.create(temperature=avgTemperaute, rawTemperature=temperature, humidity=avgHumidity, rawHumidity=humidity).save()
     print("Succesfull measurement. Temperature={}, Humiditiy={}, rawTemperature={}, rawHumidity={}".format(avgTemperaute, avgHumidity, temperature, humidity))
@@ -101,6 +114,11 @@ def repeateMeasurement():
             print(e)
             print('Error in measurement, repeating later')
             time.sleep(2)
+
+        except Exception as e:
+            traceback.print_exc()
+            print(e)
+            print("Error while measurements. Skipping this one")
                 
         else:
             time.sleep(TIME_BETWEEN_MEASUREMENTS)
@@ -110,7 +128,6 @@ def startMeasuring():
     print("Opening the DB and starting to measure.")
     db.connect()
     try:
-        fillFlatten()
         repeateMeasurement()
     except KeyboardInterrupt as e:
         print("\nProgram stopped manually")
